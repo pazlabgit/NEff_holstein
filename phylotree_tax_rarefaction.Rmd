@@ -1,0 +1,158 @@
+---
+title: "Generate Phylogenetic Tree, Assign Taxonomy and QC, and Rarefaction Curves"
+author: Henry Paz and Vanessa De La Guardia
+output: html_notebook
+---
+
+Generate a phylogenetic tree.
+
+```{r, engine='bash'}
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep_seqs_deblur.qza \
+  --p-n-threads auto \
+  --o-alignment aligned_rep_seqs.qza \
+  --o-masked-alignment masked_aligned_rep_seqs.qza \
+  --o-tree unrooted_tree.qza \
+  --o-rooted-tree rooted_tree.qza
+```
+
+Assign taxonomy.
+
+```{r, engine='bash'}
+#create directory
+mkdir taxonomy
+mkdir exported
+
+#download the trained green genes classifier (V4, 515F/806R primer pair)
+wget -P taxonomy \
+ https://data.qiime2.org/2020.8/common/silva-138-99-515-806-nb-classifier.qza
+  
+#assign taxonomy
+qiime feature-classifier classify-sklearn \
+  --i-classifier taxonomy/silva-138-99-515-806-nb-classifier.qza \
+  --i-reads rep_seqs_deblur.qza \
+  --o-classification taxonomy/silva_taxonomy.qza
+
+#not required
+qiime tools export \
+  --input-path taxonomy/silva_taxonomy.qza \
+  --output-path exported/silva_taxonomy
+  
+#filter out asv classified within the Archaea kingdom
+qiime taxa filter-table \
+  --i-table table_deblur.qza \
+  --i-taxonomy taxonomy/silva_taxonomy.qza \
+  --p-exclude Archaea \
+  --o-filtered-table table_deblur_qc.qza
+```
+
+Rarefy ASVs table and generate rarefaction curves.
+
+```{r, engine='bash'}
+#define even sampling depth
+qiime feature-table summarize \
+  --i-table table_deblur_qc.qza \
+  --m-sample-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/table_deblur_qc_summary.qzv
+#qiime tools view visualizations/table_deblur_qc_summary.qzv
+
+#rarefy samples
+qiime feature-table rarefy \
+  --i-table table_deblur_qc.qza \
+  --p-sampling-depth 5834 \
+  --o-rarefied-table table_deblur_rarefied.qza
+
+#Export ASV table
+qiime tools export \
+  --input-path table_deblur_rarefied.qza \
+  --output-path exported/table_deblur_rarefied
+
+biom convert -i exported/table_deblur_rarefied/feature-table.biom -o exported/table_deblur_rarefied/feature-table.txt --to-tsv
+  
+#Generate rarefaction curves  
+qiime diversity alpha-rarefaction \
+  --i-table table_deblur_rarefied.qza \
+  --i-phylogeny rooted_tree.qza \
+  --p-min-depth 1 \
+  --p-max-depth 5834 \
+  --p-metrics observed_features \
+  --p-metrics shannon \
+  --p-metrics goods_coverage \
+  --m-metadata-file metadata/metadata.txt \
+  --p-steps 10 \
+  --p-iterations 10 \
+  --o-visualization visualizations/alpha_rarefaction_plots.qzv 
+#qiime tools view visualizations/alpha_rarefaction_plots.qzv 
+
+qiime tools export \
+  --input-path visualizations/alpha_rarefaction_plots.qzv \
+  --output-path exported/alpha_rarefaction_plots
+```
+
+Generate rarefaction plots.
+
+```{r}
+#load libraries
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+
+#create directory
+dir.create("figures")
+
+#create rarefaction dataset
+rarefaction_asv <- read_csv("exported/alpha_rarefaction_plots/observed_features.csv") 
+
+#reshaping from wide format to long format
+rare_asv_long <- rarefaction_asv %>% 
+  gather(depth, value, "depth-1_iter-1":"depth-5834_iter-10")
+#look for my last column "depth-5834_iter-10"
+
+
+#rename vector
+rare_asv_long$depth <- gsub("_.*","",rare_asv_long$depth)
+rare_asv_long$depth <- gsub("\\w*-","",rare_asv_long$depth)
+
+
+#convert vector type
+str(rare_asv_long)
+
+rare_asv_long <- rare_asv_long %>% 
+  mutate(depth=as.numeric(depth))
+
+#breed data
+site_data <- rare_asv_long %>% 
+  group_by(Site, depth) %>% 
+  summarise(median=median(value),
+            q1=quantile(value,0.25),
+            q3=quantile(value,0.75))
+
+#breed data
+phenotype_data <- rare_asv_long %>% 
+  group_by(Phenotype, depth) %>% 
+  summarise(median=median(value),
+            q1=quantile(value,0.25),
+            q3=quantile(value,0.75))
+
+#specify site order
+site_data$Site <- factor(site_data$Site, levels=c("Rumen", "Feces"))
+
+site_asv <- ggplot(site_data, aes(x=depth, y=median, color=Site, shape=Site)) + geom_line(position=position_dodge(0.02)) + geom_point(size=3, position=position_dodge(0.02)) + labs(title="",x="Sequencing Depth", y="Amplicon Sequence Variants", color="Site", shape="Site") + theme(panel.grid.major = element_line(color="light gray", linetype = "dotted", size = 0.3), panel.grid.minor = element_blank(), panel.background = element_blank(), plot.title = element_text(color = "black", size= 16, face = "bold", hjust = 0.5), axis.line=element_line(color="black", size=0.5), axis.ticks=element_line(color="black"), axis.text=element_text(color="black", size=12, face="plain"), axis.title=element_text(color="black", size=14, face="bold"), legend.title=element_text(color= "black",size =10, face = "bold"), legend.text=element_text(color="black",size=9,face="bold")) + scale_colour_manual(name="Site", values=c("#006400", "#D2691E")) + scale_shape_manual(name="Site", values=c(15,16))
+
+
+#breed graph
+phenotype_data$Phenotype <- factor(phenotype_data$Phenotype, levels=c("Low Neff", "High Neff"))
+
+phenotype_asv <- ggplot(phenotype_data, aes(x=depth, y=median, color=Phenotype, shape=Phenotype)) + geom_line(position=position_dodge(0.02)) + geom_point(size=3, position=position_dodge(0.02)) + labs(title="",x="Sequencing Depth", y="Amplicon Sequence Variants", color="Phenotype", shape="Phenotype") + theme(panel.grid.major = element_line(color="light gray", linetype = "dotted", size = 0.3), panel.grid.minor = element_blank(), panel.background = element_blank(), plot.title = element_text(color = "black", size= 16, face = "bold", hjust = 0.5), axis.line=element_line(color="black", size=0.5), axis.ticks=element_line(color="black"), axis.text=element_text(color="black", size=12, face="plain"), axis.title=element_text(color="black", size=14, face="bold"), legend.title=element_text(color= "black",size =10, face = "bold"), legend.text=element_text(color="black",size=9,face="bold")) + scale_colour_manual(values=c("Red","Blue")) + scale_shape_manual(values=c(15,16))
+
+
+rarefactions_vert <- ggarrange(site_asv, phenotype_asv, 
+                               labels = c("A", "B"),
+                               font.label = list(size=20), 
+                               ncol=1, nrow=2)
+
+ggexport(rarefactions_vert, filename="figures/rarefactioncurvevert_holstein.pdf", height=9, width=9)
+jpeg("figures/rarefactioncurvevert_holstein.jpg", units="in", height=9, width=9, res=300)
+rarefactions_vert
+dev.off()
+```
