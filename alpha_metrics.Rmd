@@ -1,0 +1,362 @@
+---
+title: "Alpha metrics"
+author: Henry Paz and Vanessa De La Guardia
+output: html_notebook
+---
+Alpha metrics 
+```{r, engine='bash'}
+mkdir alpha_metrics
+
+#compute alpha diversity metrics
+qiime diversity alpha \
+  --i-table site/table_rarefied_rumen.qza \
+  --p-metric goods_coverage \
+  --o-alpha-diversity alpha_metrics/goods_coverage_vector_rumen.qza 
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_rumen.qza \
+  --p-metric observed_features \
+  --o-alpha-diversity alpha_metrics/observed_features_vector_rumen.qza
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_rumen.qza \
+  --p-metric shannon \
+  --o-alpha-diversity alpha_metrics/shannon_vector_rumen.qza
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_rumen.qza \
+  --p-metric pielou_e \
+  --o-alpha-diversity alpha_metrics/pielou_e_vector_rumen.qza
+  
+#compare alpha diversity metrics between phenotypes
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/goods_coverage_vector_rumen.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/goods_coverage_significance_rumen.qzv
+#qiime tools view visualizations/goods_coverage_significance_rumen.qzv
+
+qiime tools export \
+  --input-path visualizations/goods_coverage_significance_rumen.qzv \
+  --output-path exported/goods_coverage_significance_rumen
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/observed_features_vector_rumen.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/observed_features_significance_rumen.qzv
+#qiime tools view visualizations/observed_features_significance_rumen.qzv
+
+qiime tools export \
+  --input-path visualizations/observed_features_significance_rumen.qzv \
+  --output-path exported/observed_features_significance_rumen
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/shannon_vector_rumen.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/shannon_significance_rumen.qzv
+#qiime tools view visualizations/shannon_significance_rumen.qzv
+
+qiime tools export \
+  --input-path visualizations/shannon_significance_rumen.qzv \
+  --output-path exported/shannon_significance_rumen
+  
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/pielou_e_vector_rumen.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/pielou_e_significance_rumen.qzv
+#qiime tools view visualizations/pielou_e_significance_rumen.qzv 
+
+qiime tools export \
+--input-path visualizations/pielou_e_significance_rumen.qzv \
+--output-path exported/pielou_e_significance_rumen
+```
+
+Alpha plots rumen
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+
+
+#create goods_coverage dataset
+goods_coverage_data <-read_tsv("exported/goods_coverage_significance_rumen/metadata.tsv") %>% 
+  select(Phenotype, goods_coverage) %>% 
+  slice(2:12) %>% 
+  mutate(Efficiency=as.factor(Phenotype)) %>% 
+  mutate(goods_coverage=as.numeric(goods_coverage))
+
+
+#summary statistic  
+options(pillar.sigfig=5)
+goods_coverage_data %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(goods_coverage),
+            stdev=sd(goods_coverage),
+            maxvalue=max(goods_coverage),
+            minvalue=min(goods_coverage),
+            sem= sd(goods_coverage)/sqrt(n()))
+
+
+#kruskal–wallis test phenotype
+kruskal.test(goods_coverage~Phenotype, data=goods_coverage_data)
+#post-hoc test
+pairwise.wilcox.test(goods_coverage_data$goods_coverage, goods_coverage_data$Phenotype, p.adjust.method="BH")
+
+
+
+######################################################################
+#create observed_features dataset
+observed_features_data <-read_tsv("exported/observed_features_significance_rumen/metadata.tsv") %>% 
+  select(Phenotype, observed_features) %>% 
+  slice(2:12) %>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>% 
+  mutate(observed_features=as.numeric(observed_features))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5)
+observed_features_data %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(observed_features),
+            stdev=sd(observed_features),
+            maxvalue=max(observed_features),
+            minvalue=min(observed_features),
+            sem= sd(observed_features)/sqrt(n()))
+
+
+#kruskal–wallis test phenotype
+kruskal.test(observed_features~Phenotype, data=observed_features_data)
+#post-hoc test
+pairwise.wilcox.test(observed_features_data_rumen$observed_features, observed_features_data_rumen$Time, p.adjust.method="BH")
+
+######################################################################
+#create shannon index dataset
+shannon_data <-  read_tsv("exported/shannon_significance_rumen/metadata.tsv")%>% 
+  select(Phenotype, shannon_entropy)%>% 
+  slice(2:12)%>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>%
+  mutate(shannon_entropy=as.numeric(shannon_entropy))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5) 
+shannon_data %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(shannon_entropy),
+            stdev=sd(shannon_entropy),
+            maxvalue=max(shannon_entropy),
+            minvalue=min(shannon_entropy),
+            sem= sd(shannon_entropy)/sqrt(n()))
+
+#kruskal–wallis test phenotype
+kruskal.test(shannon_entropy~Phenotype, data=shannon_data)
+#post-hoc test
+pairwise.wilcox.test(shannon_data$shannon_entropy, shannon_data$Phenotype, p.adjust.method="BH")
+
+#############################################
+
+
+#create pielou_e index dataset
+pielou_e_data <-  read_tsv("exported/pielou_e_significance_rumen/metadata.tsv") %>% 
+  select(Phenotype, pielou_evenness) %>% 
+  rename(Phenotype=Phenotype)%>% 
+  slice(2:12) %>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>%
+  mutate(pielou_evenness=as.numeric(pielou_evenness))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5)
+pielou_e_data %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(pielou_evenness),
+            stdev=sd(pielou_evenness),
+            maxvalue=max(pielou_evenness),
+            minvalue=min(pielou_evenness),
+            sem= sd(pielou_evenness)/sqrt(n()))
+
+#kruskal–wallis test phenotype
+kruskal.test(pielou_evenness~Phenotype, data=pielou_e_data)
+#post-hoc test
+pairwise.wilcox.test(pielou_e_data$pielou_evenness, pielou_e_data$Phenotype, p.adjust.method="BH")
+```
+
+Alpha metrics feces
+
+```{r, engine='bash'}
+
+#compute alpha diversity metrics
+qiime diversity alpha \
+  --i-table site/table_rarefied_feces.qza \
+  --p-metric goods_coverage \
+  --o-alpha-diversity alpha_metrics/goods_coverage_vector_feces.qza 
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_feces.qza \
+  --p-metric observed_features \
+  --o-alpha-diversity alpha_metrics/observed_features_vector_feces.qza
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_feces.qza \
+  --p-metric shannon \
+  --o-alpha-diversity alpha_metrics/shannon_vector_feces.qza
+  
+qiime diversity alpha \
+  --i-table site/table_rarefied_feces.qza \
+  --p-metric pielou_e \
+  --o-alpha-diversity alpha_metrics/pielou_e_vector_feces.qza
+  
+#compare alpha diversity metrics between phenotypes
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/goods_coverage_vector_feces.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/goods_coverage_significance_feces.qzv
+#qiime tools view visualizations/goods_coverage_significance_feces.qzv
+
+qiime tools export \
+  --input-path visualizations/goods_coverage_significance_feces.qzv \
+  --output-path exported/goods_coverage_significance_feces
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/observed_features_vector_feces.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/observed_features_significance_feces.qzv
+#qiime tools view visualizations/observed_features_significance_feces.qzv
+
+qiime tools export \
+  --input-path visualizations/observed_features_significance_feces.qzv \
+  --output-path exported/observed_features_significance_feces
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/shannon_vector_feces.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/shannon_significance_feces.qzv
+#qiime tools view visualizations/shannon_significance_feces.qzv
+
+qiime tools export \
+  --input-path visualizations/shannon_significance_feces.qzv \
+  --output-path exported/shannon_significance_feces
+  
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity alpha_metrics/pielou_e_vector_feces.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --o-visualization visualizations/pielou_e_significance_feces.qzv
+#qiime tools view visualizations/pielou_e_significance_feces.qzv 
+
+qiime tools export \
+--input-path visualizations/pielou_e_significance_feces.qzv \
+--output-path exported/pielou_e_significance_feces
+```
+
+Alpha plots feces
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+
+#create goods_coverage dataset
+goods_coverage_data_feces <-read_tsv("exported/goods_coverage_significance_feces/metadata.tsv") %>% 
+  select(Phenotype, goods_coverage) %>% 
+  slice(2:12) %>% 
+  mutate(Efficiency=as.factor(Phenotype)) %>% 
+  mutate(goods_coverage=as.numeric(goods_coverage))
+
+
+#summary statistic  
+options(pillar.sigfig=5) 
+goods_coverage_data_feces %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(goods_coverage),
+            stdev=sd(goods_coverage),
+            maxvalue=max(goods_coverage),
+            minvalue=min(goods_coverage),
+            sem= sd(goods_coverage)/sqrt(n()))
+
+
+
+#kruskal–wallis test phenotype
+kruskal.test(goods_coverage~Phenotype, data=goods_coverage_data_feces)
+#post-hoc test
+pairwise.wilcox.test(goods_coverage_data_feces$goods_coverage, goods_coverage_data_feces$Phenotype, p.adjust.method="BH")
+
+
+######################################################################
+#create observed_features dataset
+observed_features_data_feces <-read_tsv("exported/observed_features_significance_feces/metadata.tsv") %>% 
+  select(Phenotype, observed_features) %>% 
+  slice(2:12) %>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>% 
+  mutate(observed_features=as.numeric(observed_features))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5)
+observed_features_data_feces %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(observed_features),
+            stdev=sd(observed_features),
+            maxvalue=max(observed_features),
+            minvalue=min(observed_features),
+            sem= sd(observed_features)/sqrt(n()))
+
+
+#kruskal–wallis test phenotype
+kruskal.test(observed_features~Phenotype, data=observed_features_data_feces)
+#post-hoc test
+pairwise.wilcox.test(observed_features_data_feces_feces$observed_features, observed_features_data_feces_feces$Time, p.adjust.method="BH")
+
+######################################################################
+#create shannon index dataset
+shannon_data_feces <-  read_tsv("exported/shannon_significance_feces/metadata.tsv")%>% 
+  select(Phenotype, shannon_entropy)%>% 
+  slice(2:12)%>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>%
+  mutate(shannon_entropy=as.numeric(shannon_entropy))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5)
+shannon_data_feces %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(shannon_entropy),
+            stdev=sd(shannon_entropy),
+            maxvalue=max(shannon_entropy),
+            minvalue=min(shannon_entropy),
+            sem= sd(shannon_entropy)/sqrt(n()))
+
+#kruskal–wallis test phenotype
+kruskal.test(shannon_entropy~Phenotype, data=shannon_data_feces)
+#post-hoc test
+pairwise.wilcox.test(shannon_data_feces$shannon_entropy, shannon_data_feces$Phenotype, p.adjust.method="BH")
+
+#############################################
+
+
+#create pielou_e index dataset
+pielou_e_data_feces <-  read_tsv("exported/pielou_e_significance_feces/metadata.tsv") %>% 
+  select(Phenotype, pielou_evenness) %>% 
+  rename(Phenotype=Phenotype)%>% 
+  slice(2:12) %>% 
+  mutate(Phenotype=as.factor(Phenotype)) %>%
+  mutate(pielou_evenness=as.numeric(pielou_evenness))
+
+#summary statistic phenotype 
+options(pillar.sigfig=5) 
+pielou_e_data_feces %>%
+  group_by(Phenotype) %>% 
+  summarise(n=n(),
+            mean=mean(pielou_evenness),
+            stdev=sd(pielou_evenness),
+            maxvalue=max(pielou_evenness),
+            minvalue=min(pielou_evenness),
+            sem= sd(pielou_evenness)/sqrt(n()))
+
+#kruskal–wallis test phenotype
+kruskal.test(pielou_evenness~Phenotype, data=pielou_e_data_feces)
+#post-hoc test
+pairwise.wilcox.test(pielou_e_data_feces$pielou_evenness, pielou_e_data_feces$Phenotype, p.adjust.method="BH")
+```
+
