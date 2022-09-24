@@ -6,10 +6,9 @@ Analysis was done as follows:
 2. qc_asvtable_deblur.Rmd
 3. phylotree_tax_rarefaction.Rmd
 4. site_evaluation_taxonomy
-5. taxonomy.Rmd
-6. alpha_metrics.Rmd
-8. beta_metrics.Rmd
-9. heatmaps.Rmd 
+5. alpha_metrics.Rmd
+6. beta_metrics.Rmd
+7. heatmaps.Rmd 
 10. lefse_taxa_levels_input.Rmd
 11. lefse_asv_input.Rmd
 12. lefse_taxa_level_results.Rmd
