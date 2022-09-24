@@ -1,0 +1,183 @@
+---
+title: "beta_metrics"
+author: Henry Paz and Vanessa De La Guardia
+output: html_notebook
+---
+
+
+Beta metrics rumen
+```{r, engine='bash'}
+#create directory beta_metrics
+mkdir beta_metrics
+
+#calculate beta metrics
+qiime diversity beta-phylogenetic \
+  --i-table site/table_rarefied_rumen.qza \
+  --i-phylogeny rooted_tree.qza \
+  --p-metric weighted_unifrac \
+  --o-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_rumen.qza
+
+qiime tools export \
+  --input-path beta_metrics/weighted_unifrac_distance_matrix_rumen.qza \
+  --output-path exported/weighted_unifrac_distance_matrix_rumen
+
+#principal coordinate analysis
+qiime diversity pcoa \
+  --i-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_rumen.qza \
+  --o-pcoa beta_metrics/weighted_unifrac_pcoa_results_rumen.qza
+
+qiime tools export \
+  --input-path beta_metrics/weighted_unifrac_pcoa_results_rumen.qza \
+  --output-path exported/weighted_unifrac_pcoa_results_rumen
+
+#generate interactive ordination plot
+qiime emperor plot \
+--i-pcoa beta_metrics/weighted_unifrac_pcoa_results_rumen.qza \
+--m-metadata-file metadata/metadata.txt \
+--o-visualization visualizations/weighted_unifrac_emperor_rumen.qzv
+#qiime tools view visualizations/weighted_unifrac_emperor_rumen.qzv
+
+qiime diversity beta-group-significance \
+  --i-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_rumen.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --m-metadata-column Phenotype \
+  --p-method permanova \
+  --p-permutations 999 \
+  --p-pairwise \
+  --o-visualization visualizations/weighted_unifrac_phenotype_significance_rumen.qzv 
+#qiime tools view visualizations/weighted_unifrac_breed_significance_rumen.qzv
+```
+
+
+Beta metrics feces
+```{r, engine='bash'}
+#calculate beta metrics
+qiime diversity beta-phylogenetic \
+  --i-table site/table_rarefied_feces.qza \
+  --i-phylogeny rooted_tree.qza \
+  --p-metric weighted_unifrac \
+  --o-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_feces.qza
+
+qiime tools export \
+  --input-path beta_metrics/weighted_unifrac_distance_matrix_feces.qza \
+  --output-path exported/weighted_unifrac_distance_matrix_feces
+
+#principal coordinate analysis
+qiime diversity pcoa \
+  --i-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_feces.qza \
+  --o-pcoa beta_metrics/weighted_unifrac_pcoa_results_feces.qza
+
+qiime tools export \
+  --input-path beta_metrics/weighted_unifrac_pcoa_results_feces.qza \
+  --output-path exported/weighted_unifrac_pcoa_results_feces
+
+#generate interactive ordination plot
+qiime emperor plot \
+--i-pcoa beta_metrics/weighted_unifrac_pcoa_results_feces.qza \
+--m-metadata-file metadata/metadata.txt \
+--o-visualization visualizations/weighted_unifrac_emperor_feces.qzv
+#qiime tools view visualizations/weighted_unifrac_emperor_feces.qzv
+
+qiime diversity beta-group-significance \
+  --i-distance-matrix beta_metrics/weighted_unifrac_distance_matrix_feces.qza \
+  --m-metadata-file metadata/metadata.txt \
+  --m-metadata-column Phenotype \
+  --p-method permanova \
+  --p-permutations 999 \
+  --p-pairwise \
+  --o-visualization visualizations/weighted_unifrac_phenotype_significance_feces.qzv 
+#qiime tools view visualizations/weighted_unifrac_phenotype_significance_feces.qzv
+```
+
+Beta plots
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+library(vegan)
+
+#Principal Component Analysis (PCoA)
+#create pcoa dataset
+pcoa_rumen <- read_tsv("exported/weighted_unifrac_pcoa_results_rumen/ordination.txt", col_names = c("SampleID", "PC1", "PC2"), skip=9) %>%
+  slice(1:11)
+
+###################################################################
+#create IDs and phenotypes dataset
+ids_phenotype <-  read_tsv("metadata/metadata.txt") %>% 
+  select("#SampleID", Phenotype) %>% 
+  rename(SampleID="#SampleID")%>% 
+  slice(2:23) %>% 
+  na.omit() 
+
+#join pcoa and ids_phenotype datasets
+pcoa_phenotype <- left_join(pcoa_rumen, ids_phenotype, by = "SampleID") %>% 
+  select(SampleID, Phenotype, PC1, PC2)
+
+#weighted unifrac distance matrix data
+weighted_unifrac <- read_tsv("exported/weighted_unifrac_distance_matrix_rumen/distance-matrix.tsv")
+weighted_unifrac <- as.data.frame(weighted_unifrac)
+
+#match sampleid order of matrix
+ids_phenotype = ids_phenotype[match(weighted_unifrac$X1, ids_phenotype$SampleID), ]
+
+#generate matrix
+row.names(weighted_unifrac) <- weighted_unifrac$X1
+weighted_unifrac <- weighted_unifrac[, -1]
+weighted_unifrac <- as.dist(weighted_unifrac)
+
+#PERMANOVA
+adonis(weighted_unifrac ~ Phenotype, permutations=999, data=ids_phenotype)
+#PERMANOVA P-value 0.83
+
+
+#PCoA plot Phenotyoe
+pcoa_phenotype$Phenotype <- factor(pcoa_phenotype$Phenotype, levels=c("Low Neff", "High Neff"))
+
+phenotype_pcoa_plot_rumen <- ggplot(pcoa_phenotype, aes(x=PC1,y=PC2,shape=Phenotype,color=Phenotype)) + geom_point(size=3) + labs(x="PC1 (45.0%)", y="PC2 (18.9%)",shape="Phenotype",color="Phenotype") +ggtitle("Rumen") + theme(panel.grid.major = element_line(color="light gray", linetype = "dotted", size = 0.3), panel.grid.minor = element_blank(), panel.background = element_blank(), plot.title = element_text(color = "black", size= 16, face = "bold", hjust = 0.5), axis.line=element_line(color="black", size=0.5), axis.ticks=element_line(color="black"), axis.text=element_text(color="black", size=12, face="plain"), axis.title=element_text(color="black", size=14, face="bold"), legend.title=element_text(color= "black",size =10, face = "bold"), legend.text=element_text(color="black",size=9,face="bold")) + scale_shape_manual(values=c(15,16)) + scale_color_manual(name="Phenotype", values=c("red", "blue"))
+
+#generate PCoA rumen
+ggexport(phenotype_pcoa_plot_rumen, filename="figures/figure_beta_rumen_phenotype.pdf", height=6, width=6)
+
+#Principal Component Analysis
+#create pcoa dataset
+pcoa_feces <- read_tsv("exported/weighted_unifrac_pcoa_results_feces/ordination.txt", col_names = c("SampleID", "PC1", "PC2"), skip=9) %>%
+  slice(1:11)
+
+###################################################################
+#create IDs and phenotypes dataset
+ids_phenotype <-  read_tsv("metadata/metadata.txt") %>% 
+  select("#SampleID", Phenotype) %>% 
+  rename(SampleID="#SampleID")%>% 
+  slice(2:23) %>% 
+  na.omit() 
+
+#join pcoa and ids_phenotype datasets
+pcoa_phenotype <- left_join(pcoa_feces, ids_phenotype, by = "SampleID") %>% 
+  select(SampleID, Phenotype, PC1, PC2)
+
+#weighted unifrac distance matrix data
+weighted_unifrac <- read_tsv("exported/weighted_unifrac_distance_matrix_feces/distance-matrix.tsv")
+weighted_unifrac <- as.data.frame(weighted_unifrac)
+
+#match sampleid order of matrix
+ids_phenotype = ids_phenotype[match(weighted_unifrac$X1, ids_phenotype$SampleID), ]
+
+#generate matrix
+row.names(weighted_unifrac) <- weighted_unifrac$X1
+weighted_unifrac <- weighted_unifrac[, -1]
+weighted_unifrac <- as.dist(weighted_unifrac)
+
+#PERMANOVA
+adonis(weighted_unifrac ~ Phenotype, permutations=999, data=ids_phenotype)
+#PERMANOVA P-value = 0.65
+
+
+#PCoA plot Phenotyoe
+pcoa_phenotype$Phenotype <- factor(pcoa_phenotype$Phenotype, levels=c("Low Neff", "High Neff"))
+
+phenotype_pcoa_plot_feces <- ggplot(pcoa_phenotype, aes(x=PC1,y=PC2,shape=Phenotype,color=Phenotype)) + geom_point(size=3) + labs(x="PC1 (37.7%)", y="PC2 (18.9%)",shape="Phenotype",color="Phenotype") +ggtitle("Feces") + theme(panel.grid.major = element_line(color="light gray", linetype = "dotted", size = 0.3), panel.grid.minor = element_blank(), panel.background = element_blank(), plot.title = element_text(color = "black", size= 16, face = "bold", hjust = 0.5), axis.line=element_line(color="black", size=0.5), axis.ticks=element_line(color="black"), axis.text=element_text(color="black", size=12, face="plain"), axis.title=element_text(color="black", size=14, face="bold"), legend.title=element_text(color= "black",size =10, face = "bold"), legend.text=element_text(color="black",size=9,face="bold")) + scale_shape_manual(values=c(15,16)) + scale_color_manual(name="Phenotype", values=c("red", "blue"))
+
+#generate PCoA feces
+ggexport(phenotype_pcoa_plot_feces, filename="figures/figure_beta_feces_phenotype.pdf", height=6, width=6)
+```
+
