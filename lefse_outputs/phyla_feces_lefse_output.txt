@@ -1,0 +1,12 @@
+Planctomycetota	3.474582824			-
+Elusimicrobiota	2.614244817			-
+Firmicutes	5.599833441			-
+Verrucomicrobiota	3.980667774			-
+Bacteroidota	5.7104014			-
+Fibrobacterota	2.790336076			-
+Cyanobacteria	3.341243545			-
+Desulfobacterota	3.053577511			-
+Spirochaetota	4.771642816			-
+Actinobacteriota	4.172720048			-
+Proteobacteria	4.487856014			-
+Patescibacteria	3.989908431			-
