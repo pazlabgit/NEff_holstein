@@ -1,0 +1,23 @@
+c__Cyanobacteriia	3.040213549			-
+c__Spirochaetia	4.955184419			-
+c__Negativicutes	4.390582727			-
+c__Saccharimonadia	3.57315362			-
+c__Clostridia	4.874515012	High_Neff	4.156570184	0.035344328
+c__Planctomycetes	3.361138374			-
+c__Desulfovibrionia	2.614244817			-
+c__Gracilibacteria	3.998707752			-
+c__Kiritimatiellae	4.77436305			-
+c__MVP_15	2.660002307			-
+p__Firmicutesc__unclassified	2.234033575			-
+c__Vampirivibrionia	4.421084026			-
+c__Lentisphaeria	3.77185267			-
+c__Endomicrobia	2.410124834			-
+c__Bacteroidia	5.623996612			-
+p__unclassifiedc__unclassified	2.857282866			-
+c__Actinobacteria	3.392396067			-
+c__Alphaproteobacteria	4.54930401			-
+c__Elusimicrobia	3.783036837			-
+c__Gammaproteobacteria	5.225702583			-
+c__Bacilli	4.632263017			-
+c__Fibrobacteria	4.800078041			-
+c__Coriobacteriia	1.535063571			-
