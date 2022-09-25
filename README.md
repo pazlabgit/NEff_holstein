@@ -9,15 +9,11 @@ Analysis was done as follows:
 5. alpha_metrics.Rmd
 6. beta_metrics.Rmd
 
-7. lefse_taxa_levels_input.Rmd
-8. lefse_asv_input.Rmd
+7. Lefse
+- lefse_input_file.Rmd
+- Lefse outputs
 
-9. Lefse
-  - Lefse outputs
+8. heatmaps.Rmd 
 
-10. heatmaps.Rmd 
 
-12. lefse_taxa_level_results.Rmd
-13. lefse_diff_asv_results.Rmd
-14. lefse_asv_results_summary.Rmd
 ``` 
