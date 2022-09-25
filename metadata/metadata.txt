@@ -1,0 +1,24 @@
+#SampleID	cow	Site	Phenotype
+#q2:types	categorical	categorical	categorical
+S1	377	Rumen	High Neff
+S10	469	Rumen	Low Neff
+S11	474	Rumen	High Neff
+S17	509	Rumen	High Neff
+S19	536	Rumen	High Neff
+S20	539	Rumen	Low Neff
+S21	541	Rumen	Low Neff
+S4	414	Rumen	Low Neff
+S5	420	Rumen	Low Neff
+S6	422	Rumen	Low Neff
+S7	438	Rumen	High Neff
+S97	377	Feces	High Neff
+S106	469	Feces	Low Neff
+S107	474	Feces	High Neff
+S113	509	Feces	High Neff
+S115	536	Feces	High Neff
+S116	539	Feces	Low Neff
+S117	541	Feces	Low Neff
+S100	414	Feces	Low Neff
+S101	420	Feces	Low Neff
+S102	422	Feces	Low Neff
+S103	438	Feces	High Neff
