@@ -2,9 +2,9 @@
 
 This repository can be used to recreate microbiota analysis presented in the following manuscript:
 
-Raw sequences are available at the NCBI Sequence Read Archive (SRA) under the accession no.
+Raw sequences are available at the NCBI Sequence Read Archive (SRA) under the accession no. SRP400507
 
-To complete the analysis, download all input files and follow the subsequent outline of R Markdown files.
+To complete the analysis, download all input files and follow the subsequent outline of R Markdown files. 
 
 
 ## R Markdown Outline
