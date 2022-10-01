@@ -15,9 +15,7 @@ To complete the analysis, download all input files and follow the subsequent out
 4. site_evaluation_taxonomy
 5. alpha_metrics.Rmd
 6. beta_metrics.Rmd
-7. Lefse
-  - lefse_input_file.Rmd
-  - Lefse outputs
-8. heatmaps.Rmd 
+8. Lefse/lefse_input_file.Rmd
+9. heatmaps.Rmd 
 ``` 
 
