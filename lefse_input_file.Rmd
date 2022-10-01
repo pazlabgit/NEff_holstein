@@ -114,7 +114,7 @@ feces_neff_hol_list <- feces_neff_hol$SampleID
 feces_neff_hol_lefse <- feces_neff_lefse[,feces_neff_hol_list]  
 
 #create file
-write.table(feces_neff_hol_lefse, file="lefse/asv_lda_input_files/lefse_asv_input_feces", sep="\t", col.names=F, row.names=T, quote=F)
+write.table(feces_neff_hol_lefse, file="lefse/asv_lda_input_files/lefse_asv_input_feces.txt", sep="\t", col.names=F, row.names=T, quote=F)
 ```
 
 
