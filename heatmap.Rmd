@@ -31,7 +31,7 @@ names(rumen_table_prop_t)[1] <- "OTUID"
 
 ############################################################################################
 #list unique ASV 
-rumen_list <-  read_tsv("heatmap/rumen_taxa.txt")
+rumen_list <-  read_tsv("Heatmap/rumen_taxa.txt")
 
 #join rumen_list and rumen_table_prop_t tbl
 rumen_tax_data <- left_join(rumen_list, rumen_table_prop_t, by=c("X1"="OTUID"))
@@ -83,7 +83,7 @@ rumen_var_data_df <- rumen_var_data_df[,-1]
 cbind(row.names(rumen_prop_t), rumen_var_data_df)
 
 #generate heatmap
-pdf("heatmap/heatmap_rumen.pdf", height=6, width=10)
+pdf("Heatmap/heatmap_rumen.pdf", height=6, width=10)
 heatmap.2(as.matrix(rumen_prop_t), Rowv=as.dendrogram(row.clus), Colv=as.dendrogram(col.clus), xlab="Amplicon Sequence Variants", ylab="Samples", col=scaleblackblue, RowSideColors= rumen_var_data_df, trace="none", density.info="none", margins=c(17,5), lhei = c(2, 6))
 dev.off()
 ```
@@ -115,7 +115,7 @@ names(feces_table_prop_t)[1] <- "OTUID" #rename first column
 
 ############################################################################################
 #list unique ASV 
-feces_list <-  read_tsv("heatmap/feces_taxa.txt")
+feces_list <-  read_tsv("Heatmap/feces_taxa.txt")
 
 #join feces_list and feces_table_prop_t tbl
 feces_tax_data <- left_join(feces_list, feces_table_prop_t, by=c("X1"="OTUID"))
@@ -167,7 +167,7 @@ feces_var_data_df <- feces_var_data_df[,-1]
 cbind(row.names(feces_prop_t), feces_var_data_df)
 
 #generate heatmap
-pdf("heatmap/heatmap_feces.pdf", height=5, width=6)
+pdf("Heatmap/heatmap_feces.pdf", height=5, width=6)
 heatmap.2(as.matrix(feces_prop_t), Rowv=as.dendrogram(row.clus), Colv=as.dendrogram(col.clus), xlab="Genus Rank", ylab="Samples", col=scaleblackblue, RowSideColors= feces_var_data_df, trace="none", density.info="none", margins=c(17,5), lhei = c(2, 6))
 dev.off()
 ```
