@@ -9,6 +9,7 @@ Create data subsets for multiple comparisons of ASVs in LefSe
 library(tidyverse)
 
 #create directory
+dir.create("lefse")
 dir.create("lefse/asv_lda_input_files")
 
 #####################
