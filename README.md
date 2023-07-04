@@ -1,6 +1,6 @@
 # Neff Holstein
 
-This repository can be used to recreate microbiota analysis presented in the following manuscript:
+This repository can be used to recreate the microbiota analysis presented in the following manuscript: V.M. De La Guardia-Hidrogo and H.A. Paz . 2023. Bacterial community structure in the rumen and hindgut is associated with nitrogen efficiency in Holstein cows. 13:10721 doi: 10.1038/s41598-023-37891-7
 
 Raw sequences are available at the NCBI Sequence Read Archive (SRA) under the accession no. SRP400507
 
